@@ -49,19 +49,19 @@ export default class Multiple extends Component {
       <div>
         <Button
           onClick={this.onChangeType}
-          active={RectangleSelector.TYPE === this.state.type}
+          $active={RectangleSelector.TYPE === this.state.type}
         >
           {RectangleSelector.TYPE}
         </Button>
         <Button
           onClick={this.onChangeType}
-          active={PointSelector.TYPE === this.state.type}
+          $active={PointSelector.TYPE === this.state.type}
         >
           {PointSelector.TYPE}
         </Button>
         <Button
           onClick={this.onChangeType}
-          active={OvalSelector.TYPE === this.state.type}
+          $active={OvalSelector.TYPE === this.state.type}
         >
           {OvalSelector.TYPE}
         </Button>

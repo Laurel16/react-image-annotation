@@ -1,4 +1,6 @@
 declare module "react-image-annotation" {
+  import React from "react";
+
   export interface IGeometry {
     type: string;
     x?: number;
@@ -6,10 +8,11 @@ declare module "react-image-annotation" {
     height?: number;
     width?: number;
   }
+
   export interface ISelector {
     TYPE: string;
     intersects: (
-      { x, y }: { x: number; y: number },
+      point: { x: number; y: number },
       geometry: IGeometry,
       container: { width: number; height: number }
     ) => boolean;
@@ -18,12 +21,13 @@ declare module "react-image-annotation" {
       container: { width: number; height: number }
     ) => number;
     methods: {
-      onMouseUp?: (annotation: IAnnotation, e: any) => IAnnotation | {};
-      onMouseDown?: (annotation: IAnnotation, e: any) => IAnnotation | {};
-      onMouseMove?: (annotation: IAnnotation, e: any) => IAnnotation | {};
-      onClick?: (annotation: IAnnotation, e: any) => IAnnotation | {};
+      onMouseUp?: (annotation: IAnnotation, event: React.MouseEvent) => IAnnotation | {};
+      onMouseDown?: (annotation: IAnnotation, event: React.MouseEvent) => IAnnotation | {};
+      onMouseMove?: (annotation: IAnnotation, event: React.MouseEvent) => IAnnotation | {};
+      onClick?: (annotation: IAnnotation, event: React.MouseEvent) => IAnnotation | {};
     };
   }
+
   export interface IAnnotation {
     selection?: {
       mode: string;
@@ -32,55 +36,65 @@ declare module "react-image-annotation" {
     geometry: IGeometry;
     data: {
       text: string;
-      id?: number;
+      id?: number | string; // Flexibilité accrue pour l'identifiant
     };
   }
-  interface IAnnotationProps {
+
+  export interface IAnnotationProps {
     src: string;
     alt?: string;
-    innerRef?: (e: any) => any;
-    onMouseUp?: (e: React.MouseEvent) => any;
-    onMouseDown?: (e: React.MouseEvent) => any;
-    onMouseMove?: (e: React.MouseEvent) => any;
-    onClick?: (e: React.MouseEvent) => any;
+    innerRef?: (element: HTMLElement | null) => void;
+    onMouseUp?: (event: React.MouseEvent) => void;
+    onMouseDown?: (event: React.MouseEvent) => void;
+    onMouseMove?: (event: React.MouseEvent) => void;
+    onClick?: (event: React.MouseEvent) => void;
 
     annotations: IAnnotation[];
     type?: string;
     selectors?: ISelector[];
 
-    value: IAnnotation | {};
-    onChange?: (e: any) => any;
-    onSubmit?: (e: any) => any;
+    value: IAnnotation | Record<string, never>;
+    onChange?: (annotation: IAnnotation | {}) => void;
+    onSubmit?: (annotation?: IAnnotation) => void;
 
-    activeAnnotationComparator?: (annotation: IAnnotation) => boolean;
+    activeAnnotationComparator?: (annotationA: IAnnotation, annotationB: IAnnotation) => boolean;
     activeAnnotations?: IAnnotation[];
 
     disableAnnotation?: boolean;
     disableSelector?: boolean;
-    renderSelector?: (
-      { annotation, active }: { annotation: IAnnotation; active: boolean }
-    ) => any;
-    disableEditor?: boolean;
-    renderEditor?: (
-      {
-        annotation,
-        onChange,
-        onSubmit
-      }: {
-        annotation: IAnnotation;
-        onChange: (annotation: IAnnotation | {}) => any;
-        onSubmit: (e?: any) => any;
-      }
-    ) => any;
+    renderSelector?: ({
+      annotation,
+      active,
+    }: {
+      annotation: IAnnotation;
+      active: boolean;
+    }) => React.ReactNode;
 
-    renderHighlight?: (
-      { annotation, active }: { annotation: IAnnotation; active: boolean }
-    ) => any;
-    renderContent?: ({ annotation }: { annotation: IAnnotation }) => any;
+    disableEditor?: boolean;
+    renderEditor?: ({
+      annotation,
+      onChange,
+      onSubmit,
+    }: {
+      annotation: IAnnotation;
+      onChange: (annotation: IAnnotation | {}) => void;
+      onSubmit: () => void;
+    }) => React.ReactNode;
+
+    renderHighlight?: ({
+      annotation,
+      active,
+    }: {
+      annotation: IAnnotation;
+      active: boolean;
+    }) => React.ReactNode;
+
+    renderContent?: ({ annotation }: { annotation: IAnnotation }) => React.ReactNode;
 
     disableOverlay?: boolean;
-    renderOverlay?: () => any;
-    allowTouch: boolean;
+    renderOverlay?: () => React.ReactNode;
+
+    allowTouch?: boolean; // Rendu optionnel pour éviter les erreurs si non défini
   }
 
   class Annotation extends React.Component<IAnnotationProps, {}> {}

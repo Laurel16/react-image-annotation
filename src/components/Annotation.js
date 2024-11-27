@@ -8,30 +8,36 @@ import withRelativeMousePos from '../utils/withRelativeMousePos'
 import defaultProps from './defaultProps'
 import Overlay from './Overlay'
 
-const Container = styled.div`
+// Container
+const Container = styled.div.attrs((props) => ({
+  'data-allow-touch': props.allowTouch,
+}))`
   clear: both;
   position: relative;
   width: 100%;
   &:hover ${Overlay} {
     opacity: 1;
   }
-  touch-action: ${(props) => (props.allowTouch ? "pinch-zoom" : "auto")};
-`
+  touch-action: ${(props) => (props.allowTouch ? 'pinch-zoom' : 'auto')};
+`;
 
+// Image
 const Img = styled.img`
   display: block;
   width: 100%;
-`
+`;
 
+// Items Container
 const Items = styled.div`
   position: absolute;
   top: 0;
   left: 0;
   bottom: 0;
   right: 0;
-`
+`;
 
-const Target = Items
+// Target alias
+const Target = Items;
 
 export default compose(
   isMouseHovering(),
@@ -216,6 +222,7 @@ export default compose(
   }
 
   shouldAnnotationBeActive = (annotation, top) => {
+    console.log("top", top)
     if (this.props.activeAnnotations) {
       const isActive = !!this.props.activeAnnotations.find(active => (
         this.props.activeAnnotationComparator(annotation, active)
@@ -250,7 +257,10 @@ export default compose(
     return (
       <Container
         style={props.style}
-        innerRef={isMouseHovering.innerRef}
+        ref={(el) => {
+          this.setInnerRef(el);
+          isMouseHovering.innerRef;
+        }}
         onMouseLeave={this.onTargetMouseLeave}
         onTouchCancel={this.onTargetTouchLeave}
         allowTouch={allowTouch}
@@ -261,7 +271,7 @@ export default compose(
           alt={props.alt}
           src={props.src}
           draggable={false}
-          innerRef={this.setInnerRef}
+          ref={this.setInnerRef}
         />
         <Items>
           {props.annotations.map(annotation => (
@@ -282,7 +292,7 @@ export default compose(
           }
         </Items>
         <Target
-          innerRef={this.targetRef}
+          ref={this.targetRef}
           onClick={this.onClick}
           onMouseUp={this.onMouseUp}
           onMouseDown={this.onMouseDown}

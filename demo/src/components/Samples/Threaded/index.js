@@ -255,6 +255,7 @@ export default class Threaded extends Component {
   }
 
   renderContent = ({ key, annotation }) => {
+    console.log("je suis dans le render content de Threaded")
     return (
       <ThreadedContent
         key={key}

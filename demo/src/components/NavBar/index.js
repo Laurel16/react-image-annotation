@@ -1,6 +1,6 @@
-import React from 'react'
-import styled from 'styled-components'
-import { Link } from 'react-router-dom'
+import React from 'react';
+import styled from 'styled-components';
+import { Link } from 'react-router-dom';
 
 const Header = styled.header`
   background-color: #fcfcfc;
@@ -13,18 +13,20 @@ const Header = styled.header`
   left: 0;
   right: 0;
   z-index: 100;
-`
+`;
 
 const Items = styled.div`
   margin: 0 auto;
   max-width: 720px;
   display: table;
-`
+`;
 
 const Item = styled.div`
   display: table-cell;
   padding: 16px 0;
-  ${props => props.grow && `
+  ${({ $grow }) =>
+    $grow &&
+    `
     width: 100%;
   `}
 
@@ -41,26 +43,26 @@ const Item = styled.div`
       color: white;
     }
   }
-`
+`;
 
 const Title = styled(Link)`
   margin-right: 16px;
-`
+`;
 
 export default (props) => (
   <Header>
     <Items>
-      <Item grow>
+      <Item $grow>
         <Title to='/'>
           {props.title}
         </Title>
         <Link to='/docs'>Docs</Link>
       </Item>
       <Item>
-        <a href='//github.com/Secretmapper/react-image-annotation' target='__blank'>
+        <a href='//github.com/Secretmapper/react-image-annotation' target='_blank' rel='noopener noreferrer'>
           Github
         </a>
       </Item>
     </Items>
   </Header>
-)
+);

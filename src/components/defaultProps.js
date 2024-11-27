@@ -61,6 +61,7 @@ export default {
     />
   ),
   renderHighlight: ({ key, annotation, active }) => {
+    console.log('Appel à renderHighlight avec annotation:', annotation);
     switch (annotation.geometry.type) {
       case RectangleSelector.TYPE:
         return (
@@ -91,6 +92,7 @@ export default {
     }
   },
   renderContent: ({ key, annotation }) => (
+    console.log('Je suis dans render content dans default props:', annotation),
     <Content
       key={key}
       annotation={annotation}

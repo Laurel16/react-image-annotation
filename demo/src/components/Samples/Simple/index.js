@@ -12,11 +12,12 @@ export default class Simple extends Component {
 
   onChange = (annotation) => {
     this.setState({ annotation })
+    //console.log(annotation)
   }
 
   onSubmit = (annotation) => {
     const { geometry, data } = annotation
-
+    console.log("Annotation submitted:", annotation);
     this.setState({
       annotation: {},
       annotations: this.state.annotations.concat({
@@ -26,6 +27,7 @@ export default class Simple extends Component {
           id: Math.random()
         }
       })
+      
     })
   }
 
@@ -42,7 +44,7 @@ export default class Simple extends Component {
           value={this.state.annotation}
           onChange={this.onChange}
           onSubmit={this.onSubmit}
-          allowTouch
+         
         />
       </Root>
     )

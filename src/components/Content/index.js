@@ -14,6 +14,7 @@ const Container = styled.div`
 `
 
 function Content (props) {
+  console.log('Rendering content for annotation:', props.annotation)
   const { geometry } = props.annotation
   if (!geometry) return null
 
@@ -21,6 +22,7 @@ function Content (props) {
     <Container
       style={{
         position: 'absolute',
+        background: 'red',
         left: `${geometry.x}%`,
         top: `${geometry.y + geometry.height}%`,
         ...props.style
@@ -28,7 +30,7 @@ function Content (props) {
       className={props.className}
       geometry={geometry}
     >
-      {props.annotation.data && props.annotation.data.text}
+      {props.annotation.data && props.annotation.data.text || 'Label manquant'}
     </Container>
   )
 }

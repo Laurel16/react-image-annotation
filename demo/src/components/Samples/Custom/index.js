@@ -64,6 +64,7 @@ function renderHighlight ({ annotation, active }) {
 
 function renderContent ({ annotation }) {
   const { geometry } = annotation
+  console.log("je suis dans le render content de custom")
   return (
     <div
       key={annotation.data.id}
