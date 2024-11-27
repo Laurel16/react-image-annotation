@@ -6,11 +6,26 @@ import isMouseHovering from '../utils/isMouseHovering'
 import withRelativeMousePos from '../utils/withRelativeMousePos'
 
 import defaultProps from './defaultProps'
+//import Overlay from './Overlay'
+
+
+import Point from './Point'
+import Editor from './Editor'
+import FancyRectangle from './FancyRectangle'
+import Rectangle from './Rectangle'
+import Oval from './Oval'
+import Content from './Content'
 import Overlay from './Overlay'
 
+import {
+  RectangleSelector,
+  PointSelector,
+  OvalSelector
+} from '../selectors'
 // Container
+
 const Container = styled.div.attrs((props) => ({
-  'data-allow-touch': props.allowTouch,
+  'data-allow-touch': props.$allowTouch,
 }))`
   clear: both;
   position: relative;
@@ -18,8 +33,9 @@ const Container = styled.div.attrs((props) => ({
   &:hover ${Overlay} {
     opacity: 1;
   }
-  touch-action: ${(props) => (props.allowTouch ? 'pinch-zoom' : 'auto')};
+  touch-action: ${(props) => (props.$allowTouch ? 'pinch-zoom' : 'auto')};
 `;
+
 
 // Image
 const Img = styled.img`
@@ -93,8 +109,111 @@ export default compose(
     allowTouch: T.bool
   }
 
-  static defaultProps = defaultProps
-
+  //static defaultProps = defaultProps
+  static defaultProps ={
+    innerRef: () => {},
+    onChange: () => {},
+    onSubmit: () => {},
+    type: RectangleSelector.TYPE,
+    selectors: [
+      RectangleSelector,
+      PointSelector,
+      OvalSelector
+    ],
+    disableAnnotation: false,
+    disableSelector: false,
+    disableEditor: false,
+    disableOverlay: false,
+    allowTouch: false,
+    activeAnnotationComparator: (a, b) => a === b,
+    renderSelector: ({ annotation }) => {
+      switch (annotation.geometry.type) {
+        case RectangleSelector.TYPE:
+          return (
+            <FancyRectangle
+              annotation={annotation}
+            />
+          )
+        case PointSelector.TYPE:
+          return (
+            <Point
+              annotation={annotation}
+            />
+          )
+        case OvalSelector.TYPE:
+          return (
+            <Oval
+              annotation={annotation}
+            />
+          )
+        default:
+          return null
+      }
+    },
+    renderEditor: ({ annotation, onChange, onSubmit }) => (
+      <Editor
+        annotation={annotation}
+        onChange={onChange}
+        onSubmit={onSubmit}
+      />
+    ),
+    renderHighlight: ({ key, annotation, active }) => {
+      console.log('Appel à renderHighlight avec annotation:', annotation);
+      switch (annotation.geometry.type) {
+        case RectangleSelector.TYPE:
+          return (
+            <Rectangle
+              key={key}
+              annotation={annotation}
+              active={active}
+            />
+          )
+        case PointSelector.TYPE:
+          return (
+            <Point
+              key={key}
+              annotation={annotation}
+              active={active}
+            />
+          )
+        case OvalSelector.TYPE:
+          return (
+            <Oval
+              key={key}
+              annotation={annotation}
+              active={active}
+            />
+          )
+        default:
+          return null
+      }
+    },
+    renderContent: ({ key, annotation }) => {
+      console.log('Je suis dans render content dans default props:', annotation);
+      return (
+        <Content
+          key={key}
+          annotation={annotation}
+        />
+      )
+    },
+    renderOverlay: ({ type, annotation }) => {
+      switch (type) {
+        case PointSelector.TYPE:
+          return (
+            <Overlay>
+              Click to Annotate
+            </Overlay>
+          )
+        default:
+          return (
+            <Overlay>
+              Click and Drag to Annotate
+            </Overlay>
+          )
+      }
+    }
+   }
   targetRef = React.createRef();
   componentDidMount() {
     if (this.props.allowTouch) {

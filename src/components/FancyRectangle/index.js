@@ -14,15 +14,18 @@ const Container = styled.div`
   right: 0;
 `
 
-function FancyRectangle (props) {
-  const { geometry } = props.annotation
-
+function FancyRectangle({
+  annotation, 
+  className = '', 
+  style = {}
+}) {
+  const { geometry } = annotation
   if (!geometry) return null
-
+  
   return (
     <Container
-      className={props.className}
-      style={props.style}
+      className={className}
+      style={style}
     >
       <Box
         style={{
@@ -56,9 +59,5 @@ function FancyRectangle (props) {
   )
 }
 
-FancyRectangle.defaultProps = {
-  className: '',
-  style: {}
-}
 
 export default FancyRectangle
