@@ -12,6 +12,7 @@
     "umd"
   ],
   "scripts": {
+    "prepare": "npm run build",
     "build:umd": "webpack --config webpack.config.umd.js",
   "build:es": "webpack --config webpack.config.es.js",
   "build": "npm run build:umd && npm run build:es",
