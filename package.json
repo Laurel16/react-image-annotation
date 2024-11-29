@@ -12,7 +12,10 @@
     "umd"
   ],
   "scripts": {
-    "build": "nwb build-react-component",
+    "build:umd": "webpack --config webpack.config.umd.js",
+  "build:es": "webpack --config webpack.config.es.js",
+  "build": "npm run build:umd && npm run build:es",
+  "start:demo": "webpack serve --config webpack.config.demo.js",
     "deploy": "gh-pages -d demo/dist",
     "clean": "nwb clean-module && nwb clean-demo",
     "start": "webpack serve --mode development",
@@ -70,7 +73,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Secretmapper/react-image-annotation"
+    "url": "https://github.com/Laurel16/react-image-annotation"
   },
   "keywords": [
     "react-component"
