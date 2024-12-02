@@ -4,6 +4,10 @@ import styled from 'styled-components'
 import compose from '../utils/compose'
 import isMouseHovering from '../utils/isMouseHovering'
 import withRelativeMousePos from '../utils/withRelativeMousePos'
+import Container from './Container';
+import Img from './Img';
+import Items from './Items';
+import Target from './Target';
 
 import defaultProps from './defaultProps'
 //import Overlay from './Overlay'
@@ -24,36 +28,38 @@ import {
 } from '../selectors'
 // Container
 
-const Container = styled.div.attrs((props) => ({
-  'data-allow-touch': props.$allowTouch,
-}))`
-  clear: both;
-  position: relative;
-  width: 100%;
-  &:hover ${Overlay} {
-    opacity: 1;
-  }
-  touch-action: ${(props) => (props.$allowTouch ? 'pinch-zoom' : 'auto')};
-`;
+// const Container = styled.div.attrs((props) => ({
+//   'data-allow-touch': props.$allowTouch,
+// }))`
+//   clear: both;
+//   position: relative;
+//   width: 100%;
+//   &:hover ${Overlay} {
+//     opacity: 1;
+//   }
+//   touch-action: ${(props) => (props.$allowTouch ? 'pinch-zoom' : 'auto')};
+// `;
 
 
-// Image
-const Img = styled.img`
-  display: block;
-  width: 100%;
-`;
+// // Image
+// const Img = styled.img`
+//   display: block;
+//   width: 100%;
+// `;
 
-// Items Container
-const Items = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-`;
+// // Items Container
+// const Items = styled.div`
+//   position: absolute;
+//   top: 0;
+//   left: 0;
+//   bottom: 0;
+//   right: 0;
+// `;
 
-// Target alias
-const Target = Items;
+// // Target alias
+// const Target = Items;
+
+
 
 export default compose(
   isMouseHovering(),

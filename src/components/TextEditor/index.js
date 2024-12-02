@@ -1,61 +1,37 @@
-import React from 'react'
-import styled, { keyframes } from 'styled-components'
+import React from 'react';
+import '../../styles/TextEditor.css'; // Assurez-vous que le chemin vers le fichier CSS est correct
 
-const Inner = styled.div`
-  padding: 8px 16px;
-
-  textarea {
-    border: 0;
-    font-size: 14px;
-    margin: 6px 0;
-    min-height: 60px;
-    outline: 0;
-  }
-`
-
-const Button = styled.div`
-  background: whitesmoke;
-  border: 0;
-  box-sizing: border-box;
-  color: #363636;
-  cursor: pointer;
-  font-size: 1rem;
-  margin: 0;
-  outline: 0;
-  padding: 8px 16px;
-  text-align: center;
-  text-shadow: 0 1px 0 rgba(0,0,0,0.1);
-  width: 100%;
-
-  transition: background 0.21s ease-in-out;
-
-  &:focus, &:hover {
-    background: #eeeeee;
-  }
-`
-
-function TextEditor (props) {
+function TextEditor({ onFocus, onBlur, onChange, onSubmit, value }) {
   return (
     <React.Fragment>
-      <Inner>
+      <div className="text-editor-inner">
         <textarea
-          placeholder='Write description'
-          onFocus={props.onFocus}
-          onBlur={props.onBlur}
-          onChange={props.onChange}
-          value={props.value}
-        >
-        </textarea>
-      </Inner>
-      {props.value && (
-        <Button
-          onClick={props.onSubmit}
+          className="text-editor-textarea"
+          placeholder="Write description"
+          onFocus={onFocus}
+          onBlur={onBlur}
+          onChange={onChange}
+          value={value}
+        ></textarea>
+      </div>
+      {value && (
+        <div
+          className="text-editor-button"
+          onClick={onSubmit}
+          role="button"
+          tabIndex="0"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onSubmit();
+            }
+          }}
         >
           Submit
-        </Button>
+        </div>
       )}
     </React.Fragment>
-  )
+  );
 }
 
-export default TextEditor
+export default TextEditor;

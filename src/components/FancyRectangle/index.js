@@ -1,63 +1,49 @@
-import React from 'react'
-import styled from 'styled-components'
+import React from 'react';
+import '../../styles/FancyRectangle.css'; // Import du fichier CSS
 
-const Box = styled.div`
-  background: rgba(0, 0, 0, 0.2);
-  position: absolute;
-`
+function FancyRectangle({ annotation, className = '', style = {} }) {
+  const { geometry } = annotation;
+  if (!geometry) return null;
 
-const Container = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-`
-
-function FancyRectangle({
-  annotation, 
-  className = '', 
-  style = {}
-}) {
-  const { geometry } = annotation
-  if (!geometry) return null
-  
   return (
-    <Container
-      className={className}
+    <div
+      className={`fancy-rectangle-container ${className}`} // Ajout de la classe CSS
       style={style}
     >
-      <Box
+      <div
+        className="fancy-rectangle-box"
         style={{
           height: `${geometry.y}%`,
-          width: '100%'
+          width: '100%',
         }}
       />
-      <Box
+      <div
+        className="fancy-rectangle-box"
         style={{
           top: `${geometry.y}%`,
           height: `${geometry.height}%`,
-          width: `${geometry.x}%`
+          width: `${geometry.x}%`,
         }}
       />
-      <Box
+      <div
+        className="fancy-rectangle-box"
         style={{
           top: `${geometry.y}%`,
           left: `${geometry.x + geometry.width}%`,
           height: `${geometry.height}%`,
-          width: `${100 - (geometry.x + geometry.width)}%`
+          width: `${100 - (geometry.x + geometry.width)}%`,
         }}
       />
-      <Box
+      <div
+        className="fancy-rectangle-box"
         style={{
           top: `${geometry.y + geometry.height}%`,
           height: `${100 - (geometry.y + geometry.height)}%`,
-          width: '100%'
+          width: '100%',
         }}
       />
-    </Container>
-  )
+    </div>
+  );
 }
 
-
-export default FancyRectangle
+export default FancyRectangle;
