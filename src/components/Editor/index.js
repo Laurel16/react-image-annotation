@@ -10,7 +10,35 @@ function Editor({
   onSubmit
 }) {
   const { geometry } = annotation;
-  if (!geometry) return null;
+
+  // Vérifie si l'annotation contient une géométrie
+  if (!geometry) {
+    console.warn('[Editor] No geometry provided in annotation:', annotation);
+    return null;
+  }
+
+  const handleTextChange = (e) => {
+    const updatedAnnotation = {
+      ...annotation,
+      data: {
+        ...annotation.data,
+        text: e.target.value,
+      },
+    };
+
+    console.log('[Editor] Annotation updated on text change:', updatedAnnotation);
+    onChange(updatedAnnotation);
+  };
+
+  const handleSubmit = () => {
+    if (!annotation.geometry || !annotation.data) {
+      console.warn('[Editor] Invalid annotation on submit:', annotation);
+      return;
+    }
+
+    console.log('[Editor] Annotation submitted:', annotation);
+    onSubmit(annotation);
+  };
 
   return (
     <div
@@ -22,14 +50,8 @@ function Editor({
       }}
     >
       <TextEditor
-        onChange={e => onChange({
-          ...annotation,
-          data: {
-            ...annotation.data,
-            text: e.target.value,
-          },
-        })}
-        onSubmit={onSubmit}
+        onChange={handleTextChange}
+        onSubmit={handleSubmit}
         value={annotation.data && annotation.data.text}
       />
     </div>

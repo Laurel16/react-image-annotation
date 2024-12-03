@@ -5,6 +5,11 @@ const getMouseRelativeCoordinates = e => {
   // or it could be that nativeEvent offsets are based on target rather than
   // currentTarget.
   // To keep consistent behavior of the selector use the bounding client rect.
+  
+  if (!e.currentTarget) {
+    console.error('getMouseRelativeCoordinates: currentTarget is null', e);
+    return { x: null, y: null };
+  }
   const rect = e.currentTarget.getBoundingClientRect();
   const offsetX = e.clientX - rect.x;
   const offsetY = e.clientY - rect.y;

@@ -1,457 +1,347 @@
-import React, { Component } from 'react'
-import T from 'prop-types'
-import styled from 'styled-components'
-import compose from '../utils/compose'
-import isMouseHovering from '../utils/isMouseHovering'
-import withRelativeMousePos from '../utils/withRelativeMousePos'
+import React, { useRef, useEffect, useCallback, useMemo } from 'react';
+import styled from 'styled-components';
+import isMouseHovering from '../utils/isMouseHovering';
+import withRelativeMousePos from '../utils/withRelativeMousePos';
 import Container from './Container';
 import Img from './Img';
 import Items from './Items';
 import Target from './Target';
+import compose from '../utils/compose';
+import Point from './Point';
+import Editor from './Editor';
+import FancyRectangle from './FancyRectangle';
+import Rectangle from './Rectangle';
+import Oval from './Oval';
+import Content from './Content';
+import Overlay from './Overlay';
 
-import defaultProps from './defaultProps'
-//import Overlay from './Overlay'
+import { RectangleSelector, PointSelector, OvalSelector } from '../selectors';
 
+const Annotation = ({
+  annotations = [],
+  type = RectangleSelector.TYPE,
+  selectors = [RectangleSelector, PointSelector, OvalSelector],
+  value,
+  innerRef = () => {},
+  onChange = () => {},
+  onSubmit = () => {},
+  renderHighlight = ({ key, annotation, active }) => {
+    console.log(
+      '[renderHighlight] Rendering highlight for annotation:',
+      annotation,
+    );
+    if (!annotation.geometry) {
+      console.warn('[renderHighlight] Annotation has no geometry:', annotation);
+    }
+    switch (annotation.geometry?.type) {
+      case RectangleSelector.TYPE:
+        return <Rectangle key={key} annotation={annotation} active={active} />;
+      case PointSelector.TYPE:
+        return <Point key={key} annotation={annotation} active={active} />;
+      case OvalSelector.TYPE:
+        return <Oval key={key} annotation={annotation} active={active} />;
+      default:
+        return null;
+    }
+  },
+  renderSelector = ({ annotation }) => {
+    console.log(
+      '[renderSelector] Rendering selector for annotation:',
+      annotation,
+    );
+    if (!annotation.geometry) {
+      console.warn('[renderSelector] Annotation has no geometry:', annotation);
+    }
+    switch (annotation.geometry?.type) {
+      case RectangleSelector.TYPE:
+        return <FancyRectangle annotation={annotation} />;
+      case PointSelector.TYPE:
+        return <Point annotation={annotation} />;
+      case OvalSelector.TYPE:
+        return <Oval annotation={annotation} />;
+      default:
+        return null;
+    }
+  },
+  renderEditor = ({ annotation, onChange, onSubmit }) => (
+    <Editor annotation={annotation} onChange={onChange} onSubmit={onSubmit} />
+  ),
+  renderContent = ({ key, annotation }) => {
+    console.log(
+      '[renderContent] Rendering content for annotation:',
+      annotation,
+    );
+    return <Content key={key} annotation={annotation} />;
+  },
+  renderOverlay = ({ type }) => {
+    console.log('[renderOverlay] Rendering overlay for type:', type);
+    return type === PointSelector.TYPE ? (
+      <Overlay>Click to Annotate</Overlay>
+    ) : (
+      <Overlay>Click and Drag to Annotate</Overlay>
+    );
+  },
+  disableAnnotation = false,
+  disableSelector = false,
+  disableEditor = false,
+  disableOverlay = false,
+  activeAnnotationComparator = (a, b) => a === b,
+  relativeMousePos,
+  isMouseHovering,
+  allowTouch = false,
+  style,
+  className,
+  alt,
+  src,
+  children,
+}) => {
+  console.log('[Annotation] Props received:');
+  console.log('src:', src);
+  console.log('annotations:', annotations);
+  console.log('value:', value);
+  console.log('relative mouse pos', relativeMousePos);
 
-import Point from './Point'
-import Editor from './Editor'
-import FancyRectangle from './FancyRectangle'
-import Rectangle from './Rectangle'
-import Oval from './Oval'
-import Content from './Content'
-import Overlay from './Overlay'
+  const containerRef = useRef(null);
+  const targetRef = useRef(null);
+  // const setInnerRef = useCallback(
+  //   (el) => {
+  //     // Directly set the ref if it exists
+  //     if (relativeMousePos && relativeMousePos.innerRef) {
+  //       relativeMousePos.innerRef.current = el;
+  //     }
 
-import {
-  RectangleSelector,
-  PointSelector,
-  OvalSelector
-} from '../selectors'
-// Container
+  //     if (typeof innerRef === 'function') {
+  //       innerRef(el);
+  //     }
 
-// const Container = styled.div.attrs((props) => ({
-//   'data-allow-touch': props.$allowTouch,
-// }))`
-//   clear: both;
-//   position: relative;
-//   width: 100%;
-//   &:hover ${Overlay} {
-//     opacity: 1;
-//   }
-//   touch-action: ${(props) => (props.$allowTouch ? 'pinch-zoom' : 'auto')};
-// `;
+  //     if (isMouseHovering && isMouseHovering.innerRef) {
+  //       isMouseHovering.innerRef.current = el;
+  //     }
 
+  //     // Set your local ref
+  //     containerRef.current = el;
+  //     console.log('setInnerRef called with:', el);
+  // console.log('relativeMousePos:', relativeMousePos);
+  // console.log('isMouseHovering:', isMouseHovering);
+  // console.log('innerRef:', innerRef);
 
-// // Image
-// const Img = styled.img`
-//   display: block;
-//   width: 100%;
-// `;
-
-// // Items Container
-// const Items = styled.div`
-//   position: absolute;
-//   top: 0;
-//   left: 0;
-//   bottom: 0;
-//   right: 0;
-// `;
-
-// // Target alias
-// const Target = Items;
-
-
-
-export default compose(
-  isMouseHovering(),
-  withRelativeMousePos()
-)(class Annotation extends Component {
-  static propTypes = {
-    innerRef: T.func,
-    onMouseUp: T.func,
-    onMouseDown: T.func,
-    onMouseMove: T.func,
-    onClick: T.func,
-    children: T.object,
-
-    annotations: T.arrayOf(
-      T.shape({
-        type: T.string
-      })
-    ).isRequired,
-    type: T.string,
-    selectors: T.arrayOf(
-      T.shape({
-        TYPE: T.string,
-        intersects: T.func.isRequired,
-        area: T.func.isRequired,
-        methods: T.object.isRequired
-      })
-    ).isRequired,
-
-    value: T.shape({
-      selection: T.object,
-      geometry: T.shape({
-        type: T.string.isRequired
-      }),
-      data: T.object
-    }),
-    onChange: T.func,
-    onSubmit: T.func,
-
-    activeAnnotationComparator: T.func,
-    activeAnnotations: T.arrayOf(T.any),
-
-    disableAnnotation: T.bool,
-    disableSelector: T.bool,
-    renderSelector: T.func,
-    disableEditor: T.bool,
-    renderEditor: T.func,
-
-    renderHighlight: T.func.isRequired,
-    renderContent: T.func.isRequired,
-
-    disableOverlay: T.bool,
-    renderOverlay: T.func.isRequired,
-    allowTouch: T.bool
-  }
-
-  //static defaultProps = defaultProps
-  static defaultProps ={
-    innerRef: () => {},
-    onChange: () => {},
-    onSubmit: () => {},
-    type: RectangleSelector.TYPE,
-    selectors: [
-      RectangleSelector,
-      PointSelector,
-      OvalSelector
-    ],
-    disableAnnotation: false,
-    disableSelector: false,
-    disableEditor: false,
-    disableOverlay: false,
-    allowTouch: false,
-    activeAnnotationComparator: (a, b) => a === b,
-    renderSelector: ({ annotation }) => {
-      switch (annotation.geometry.type) {
-        case RectangleSelector.TYPE:
-          return (
-            <FancyRectangle
-              annotation={annotation}
-            />
-          )
-        case PointSelector.TYPE:
-          return (
-            <Point
-              annotation={annotation}
-            />
-          )
-        case OvalSelector.TYPE:
-          return (
-            <Oval
-              annotation={annotation}
-            />
-          )
-        default:
-          return null
-      }
+  //   },
+  //   [relativeMousePos, innerRef, isMouseHovering],
+  // );
+  const getSelectorByType = useCallback(
+    (type) => {
+      console.log('[getSelectorByType] Getting selector for type:', type);
+      return selectors.find((s) => s.TYPE === type);
     },
-    renderEditor: ({ annotation, onChange, onSubmit }) => (
-      <Editor
-        annotation={annotation}
-        onChange={onChange}
-        onSubmit={onSubmit}
-      />
-    ),
-    renderHighlight: ({ key, annotation, active }) => {
-      console.log('Appel à renderHighlight avec annotation:', annotation);
-      switch (annotation.geometry.type) {
-        case RectangleSelector.TYPE:
-          return (
-            <Rectangle
-              key={key}
-              annotation={annotation}
-              active={active}
-            />
-          )
-        case PointSelector.TYPE:
-          return (
-            <Point
-              key={key}
-              annotation={annotation}
-              active={active}
-            />
-          )
-        case OvalSelector.TYPE:
-          return (
-            <Oval
-              key={key}
-              annotation={annotation}
-              active={active}
-            />
-          )
-        default:
-          return null
+    [selectors],
+  );
+
+  const callSelectorMethod = (methodName, e) => {
+    console.log(`[callSelectorMethod] Invoking method: ${methodName}`, {
+      event: e,
+      value,
+    });
+
+    if (disableAnnotation) {
+      console.warn('[callSelectorMethod] Annotation is disabled.');
+      return;
+    }
+
+    const selector = getSelectorByType(type);
+    if (selector?.methods?.[methodName]) {
+      const updatedValue = selector.methods[methodName](value, e);
+
+      console.log(`[callSelectorMethod] Updated annotation:`, updatedValue);
+
+      if (updatedValue) {
+        onChange(updatedValue);
       }
-    },
-    renderContent: ({ key, annotation }) => {
-      console.log('Je suis dans render content dans default props:', annotation);
-      return (
-        <Content
-          key={key}
-          annotation={annotation}
-        />
-      )
-    },
-    renderOverlay: ({ type, annotation }) => {
-      switch (type) {
-        case PointSelector.TYPE:
-          return (
-            <Overlay>
-              Click to Annotate
-            </Overlay>
-          )
-        default:
-          return (
-            <Overlay>
-              Click and Drag to Annotate
-            </Overlay>
-          )
-      }
-    }
-   }
-  targetRef = React.createRef();
-  componentDidMount() {
-    if (this.props.allowTouch) {
-      this.addTargetTouchEventListeners();
-    }
-  }
-
-  addTargetTouchEventListeners = () => {
-    // Safari does not recognize touch-action CSS property,
-    // so we need to call preventDefault ourselves to stop touch from scrolling
-    // Event handlers must be set via ref to enable e.preventDefault()
-    // https://github.com/facebook/react/issues/9809
-    
-    this.targetRef.current.ontouchstart = this.onTouchStart;
-    this.targetRef.current.ontouchend = this.onTouchEnd;
-    this.targetRef.current.ontouchmove = this.onTargetTouchMove;
-    this.targetRef.current.ontouchcancel = this.onTargetTouchLeave;
-    
-  }
-  removeTargetTouchEventListeners = () => {
-    this.targetRef.current.ontouchstart = undefined;
-    this.targetRef.current.ontouchend = undefined;
-    this.targetRef.current.ontouchmove = undefined;
-    this.targetRef.current.ontouchcancel = undefined;
-  }
-
-  componentDidUpdate(prevProps) {
-    if (this.props.allowTouch !== prevProps.allowTouch) {
-      if (this.props.allowTouch) {
-        this.addTargetTouchEventListeners()
-      } else {
-        this.removeTargetTouchEventListeners()
-      }
-    }
-  }
-
-  setInnerRef = (el) => {
-    this.container = el
-    this.props.relativeMousePos.innerRef(el)
-    this.props.innerRef(el)
-  }
-
-  getSelectorByType = (type) => {
-    return this.props.selectors.find(s => s.TYPE === type)
-  }
-
-  getTopAnnotationAt = (x, y) => {
-    const { annotations } = this.props
-    const { container, getSelectorByType } = this
-
-    if (!container) return
-
-    const intersections = annotations
-      .map(annotation => {
-        const { geometry } = annotation
-        const selector = getSelectorByType(geometry.type)
-
-        return selector.intersects({ x, y }, geometry, container)
-          ? annotation
-          : false
-      })
-      .filter(a => !!a)
-      .sort((a, b) => {
-        const aSelector = getSelectorByType(a.geometry.type)
-        const bSelector = getSelectorByType(b.geometry.type)
-
-        return aSelector.area(a.geometry, container) - bSelector.area(b.geometry, container)
-      })
-
-    return intersections[0]
-  }
-
-  onTargetMouseMove = (e) => {
-    this.props.relativeMousePos.onMouseMove(e)
-    this.onMouseMove(e)
-  }
-  onTargetTouchMove = (e) => {
-    this.props.relativeMousePos.onTouchMove(e)
-    this.onTouchMove(e)
-  }
-
-  onTargetMouseLeave = (e) => {
-    this.props.relativeMousePos.onMouseLeave(e)
-  }
-  onTargetTouchLeave = (e) => {
-    this.props.relativeMousePos.onTouchLeave(e)
-  }
-
-  onMouseUp = (e) => this.callSelectorMethod('onMouseUp', e)
-  onMouseDown = (e) => this.callSelectorMethod('onMouseDown', e)
-  onMouseMove = (e) => this.callSelectorMethod('onMouseMove', e)
-  onTouchStart = (e) => this.callSelectorMethod("onTouchStart", e)
-  onTouchEnd = (e) => this.callSelectorMethod("onTouchEnd", e)
-  onTouchMove = (e) => this.callSelectorMethod("onTouchMove", e)
-  onClick = (e) => this.callSelectorMethod('onClick', e)
-
-  onSubmit = () => {
-    this.props.onSubmit(this.props.value)
-  }
-
-  callSelectorMethod = (methodName, e) => {
-    if (this.props.disableAnnotation) {
-      return
-    }
-
-    if (!!this.props[methodName]) {
-      this.props[methodName](e)
     } else {
-      const selector = this.getSelectorByType(this.props.type)
-      if (selector && selector.methods[methodName]) {
-        const value = selector.methods[methodName](this.props.value, e)
+      console.warn(
+        `[callSelectorMethod] Method not found in selector: ${methodName}`,
+      );
+    }
+  };
 
-        if (typeof value === 'undefined') {
-          if (process.env.NODE_ENV !== 'production') {
-            console.error(`
-              ${methodName} of selector type ${this.props.type} returned undefined.
-              Make sure to explicitly return the previous state
-            `)
-          }
-        } else {
-          this.props.onChange(value)
+  const getTopAnnotationAt = (x, y) => {
+    console.log('x et y', x, y);
+    if (!annotations || annotations.length === 0) {
+      console.warn('[getTopAnnotationAt] No annotations available.');
+      return null;
+    }
+
+    if (x === null || y === null) {
+      console.warn('[getTopAnnotationAt] Mouse coordinates are null.');
+      return null;
+    }
+
+    console.log('[getTopAnnotationAt] Checking top annotation at:', { x, y });
+
+    const intersectingAnnotations = annotations
+      .map((annotation) => {
+        const { geometry } = annotation;
+        if (!geometry) {
+          console.warn(
+            '[getTopAnnotationAt] Annotation has no geometry:',
+            annotation,
+          );
+          return null;
+        }
+
+        const selector = getSelectorByType(geometry.type);
+        if (!selector) {
+          console.warn(
+            '[getTopAnnotationAt] No selector found for type:',
+            geometry.type,
+          );
+          return null;
+        }
+
+        const intersects = selector.intersects(
+          { x, y },
+          geometry,
+          containerRef.current,
+        );
+
+        console.log(
+          `[getTopAnnotationAt] Annotation ${
+            annotation.data?.id || 'unknown'
+          } intersects:`,
+          intersects,
+        );
+
+        return intersects ? annotation : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => {
+        const selectorA = getSelectorByType(a.geometry.type);
+        const selectorB = getSelectorByType(b.geometry.type);
+        return selectorA.area(a.geometry) - selectorB.area(b.geometry);
+      });
+
+    const topAnnotation = intersectingAnnotations[0] || null;
+    console.log('[getTopAnnotationAt] Top annotation:', topAnnotation);
+    return topAnnotation;
+  };
+
+  console.log(
+    'relativeMousePos.x, relativeMousePos.y)',
+    relativeMousePos.x,
+    relativeMousePos.y,
+  );
+  const activeAnnotation = useMemo(() => 
+    getTopAnnotationAt(relativeMousePos.x, relativeMousePos.y), 
+    [relativeMousePos.x, relativeMousePos.y, annotations]
+  );
+
+  const shouldAnnotationBeActive = (annotation, activeAnnotation) => {
+    if (!activeAnnotationComparator) return false;
+    if (activeAnnotation) {
+      const isActive = activeAnnotationComparator(annotation, activeAnnotation);
+      console.log(
+        '[shouldAnnotationBeActive] Checking if annotation is active:',
+        { annotation, activeAnnotation, isActive },
+      );
+      return isActive;
+    }
+    return false;
+  };
+
+  console.log('[Annotation] Active annotation:', activeAnnotation);
+
+  // useEffect(() => {
+  //   const container = containerRef.current;
+  //   if (!container) return;
+  
+  //   // Ajoutez les écouteurs depuis relativeMousePos
+  //   container.addEventListener('mousemove', relativeMousePos.onMouseMove);
+  //   container.addEventListener('mouseleave', relativeMousePos.onMouseLeave);
+  
+  //   if (allowTouch) {
+  //     container.addEventListener('touchmove', relativeMousePos.onTouchMove);
+  //     container.addEventListener('touchleave', relativeMousePos.onTouchLeave);
+  //   }
+  
+  //   return () => {
+  //     container.removeEventListener('mousemove', relativeMousePos.onMouseMove);
+  //     container.removeEventListener('mouseleave', relativeMousePos.onMouseLeave);
+      
+  //     if (allowTouch) {
+  //       container.removeEventListener('touchmove', relativeMousePos.onTouchMove);
+  //       container.removeEventListener('touchleave', relativeMousePos.onTouchLeave);
+  //     }
+  //   };
+  // }, [relativeMousePos, allowTouch]);
+
+  const setInnerRef = useCallback(
+    (el) => {
+      containerRef.current = el;
+      if (relativeMousePos?.innerRef) relativeMousePos.innerRef.current = el;
+      if (isMouseHovering?.innerRef) isMouseHovering.innerRef.current = el;
+      if (typeof innerRef === 'function') innerRef(el);
+  
+      // Ajout des écouteurs directement dans setInnerRef
+      if (el) {
+        el.addEventListener('mousemove', relativeMousePos.onMouseMove);
+        el.addEventListener('mouseleave', relativeMousePos.onMouseLeave);
+        if (allowTouch) {
+          el.addEventListener('touchmove', relativeMousePos.onTouchMove);
+          el.addEventListener('touchleave', relativeMousePos.onTouchLeave);
         }
       }
-    }
-  }
-
-  shouldAnnotationBeActive = (annotation, top) => {
-    console.log("top", top)
-    if (this.props.activeAnnotations) {
-      const isActive = !!this.props.activeAnnotations.find(active => (
-        this.props.activeAnnotationComparator(annotation, active)
-      ))
-
-      return isActive || top === annotation
-    } else {
-      return top === annotation
-    }
-  }
-
+    },
+    [relativeMousePos, isMouseHovering, innerRef, allowTouch]
+  );
+  
   
 
-  render () {
-    const { props } = this
-    const {
-      isMouseHovering,
-
-      renderHighlight,
-      renderContent,
-      renderSelector,
-      renderEditor,
-      renderOverlay,
-      allowTouch
-    } = props
-
-    const topAnnotationAtMouse = this.getTopAnnotationAt(
-      this.props.relativeMousePos.x,
-      this.props.relativeMousePos.y
-    )
-
-    return (
-      <Container
-        style={props.style}
-        ref={(el) => {
-          this.setInnerRef(el);
-          isMouseHovering.innerRef;
-        }}
-        onMouseLeave={this.onTargetMouseLeave}
-        onTouchCancel={this.onTargetTouchLeave}
-        allowTouch={allowTouch}
-      >
-        <Img
-          className={props.className}
-          style={props.style}
-          alt={props.alt}
-          src={props.src}
-          draggable={false}
-          ref={this.setInnerRef}
-        />
-        <Items>
-          {props.annotations.map(annotation => (
-            renderHighlight({
-              key: annotation.data.id,
-              annotation,
-              active: this.shouldAnnotationBeActive(annotation, topAnnotationAtMouse)
-            })
-          ))}
-          {!props.disableSelector
-            && props.value
-            && props.value.geometry
-            && (
-              renderSelector({
-                annotation: props.value
-              })
-            )
-          }
-        </Items>
-        <Target
-          ref={this.targetRef}
-          onClick={this.onClick}
-          onMouseUp={this.onMouseUp}
-          onMouseDown={this.onMouseDown}
-          onMouseMove={this.onTargetMouseMove}
-        />
-        {!props.disableOverlay && (
-          renderOverlay({
-            type: props.type,
-            annotation: props.value
-          })
+  return (
+    <Container
+      ref={setInnerRef}
+      style={style}
+      className={className}
+      onMouseMove={relativeMousePos.onMouseMove}  // Ajoutez cette ligne
+  onMouseLeave={relativeMousePos.onMouseLeave}  // Ajoutez cette ligne
+  onTouchMove={relativeMousePos.onTouchMove}  // Ajoutez cette ligne
+  onTouchCancel={relativeMousePos.onTouchLeave}
+      allowTouch={allowTouch}
+    >
+      <Img ref={setInnerRef} alt={alt} src={src} />
+      <Items>
+        {annotations.map((annotation) =>
+          renderHighlight({
+            key: annotation.data.id,
+            annotation,
+            active: shouldAnnotationBeActive(annotation, activeAnnotation),
+          }),
         )}
-        {props.annotations.map(annotation => (
-          this.shouldAnnotationBeActive(annotation, topAnnotationAtMouse)
-          && (
-            renderContent({
-              key: annotation.data.id,
-              annotation: annotation
-            })
-          )
-        ))}
-        {!props.disableEditor
-          && props.value
-          && props.value.selection
-          && props.value.selection.showEditor
-          && (
-            renderEditor({
-              annotation: props.value,
-              onChange: props.onChange,
-              onSubmit: this.onSubmit
-            })
-          )
-        }
-        <div>{props.children}</div>
-      </Container>
-    )
-  }
-})
+        {!disableSelector &&
+          value?.geometry &&
+          renderSelector({ annotation: value })}
+      </Items>
+      <Target
+        ref={targetRef}
+        onMouseDown={(e) => callSelectorMethod('onMouseDown', e)}
+        onMouseMove={(e) => callSelectorMethod('onMouseMove', e)}
+        onMouseUp={(e) => callSelectorMethod('onMouseUp', e)}
+        onClick={(e) => callSelectorMethod('onClick', e)}
+      />
+      {!disableOverlay &&
+        renderOverlay({
+          type,
+          annotation: value,
+        })}
+      {annotations.map(
+        (annotation) =>
+          shouldAnnotationBeActive(annotation, activeAnnotation) &&
+          renderContent({ key: annotation.data.id, annotation }),
+      )}
+      {!disableEditor &&
+        value?.selection?.showEditor &&
+        renderEditor({ annotation: value, onChange, onSubmit })}
+      {children}
+    </Container>
+  );
+};
+
+export default compose(isMouseHovering(), withRelativeMousePos())(Annotation);

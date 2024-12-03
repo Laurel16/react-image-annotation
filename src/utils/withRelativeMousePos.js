@@ -1,64 +1,78 @@
-import React, { PureComponent as Component } from 'react'
+import React, { useState, useEffect, useRef } from 'react';
 import { getOffsetCoordPercentage } from './offsetCoordinates';
 
-const withRelativeMousePos = (key = 'relativeMousePos') => DecoratedComponent => {
-  class WithRelativeMousePos extends Component {
-    state = { x: null, y: null }
+const useRelativeMousePos = () => {
+  const [position, setPosition] = useState({ x: null, y: null });
+  const containerRef = useRef(null);
 
-    innerRef = el => {
-      this.container = el
-    }
+  const handleMouseMove = (e) => {
+    if (!containerRef.current) return;
+    const coords = getOffsetCoordPercentage(e, containerRef.current);
+    console.log('[useRelativeMousePos] handleMouseMove:', coords);
+    setPosition(coords);
+  };
 
-    onMouseMove = (e) => {
-      const xystate = getOffsetCoordPercentage(e, this.container);
-      this.setState(xystate);
-    }
-    onTouchMove = (e) => {
-      if (e.targetTouches.length === 1) {
-        const touch = e.targetTouches[0]
+  const handleTouchMove = (e) => {
+    if (!containerRef.current || e.targetTouches.length !== 1) return;
+    const touch = e.targetTouches[0];
+    const boundingRect = containerRef.current.getBoundingClientRect();
 
-        const offsetX = touch.pageX - this.container.offsetParent.offsetLeft
-        const offsetY = touch.pageY - this.container.offsetParent.offsetTop
+    const offsetX = touch.pageX - boundingRect.left;
+    const offsetY = touch.pageY - boundingRect.top;
 
-        this.setState({
-          x: (offsetX / this.container.width) * 100,
-          y: (offsetY / this.container.height) * 100
-        })
-      }
-    }
+    const coords = {
+      x: (offsetX / boundingRect.width) * 100,
+      y: (offsetY / boundingRect.height) * 100,
+    };
 
-    onMouseLeave = (e) => {
-      this.setState({ x: null, y: null })
-    }
-    onTouchLeave = (e) => {
-      this.setState({ x: null, y: null })
-    }
+    console.log('[useRelativeMousePos] handleTouchMove:', coords);
+    setPosition(coords);
+  };
 
-    render () {
-      const hocProps = {
-        [key]: {
-          innerRef: this.innerRef,
-          onMouseMove: this.onMouseMove,
-          onMouseLeave: this.onMouseLeave,
-          onTouchMove: this.onTouchMove,
-          onTouchLeave: this.onTouchLeave,
-          x: this.state.x,
-          y: this.state.y
-        }
-      }
+  const handleMouseLeave = () => {
+    console.log('[useRelativeMousePos] handleMouseLeave: Resetting position');
+    setPosition({ x: null, y: null });
+  };
 
-      return (
-        <DecoratedComponent
-          {...this.props}
-          {...hocProps}
-        />
-      )
-    }
-  }
+  const handleTouchLeave = () => {
+    console.log('[useRelativeMousePos] handleTouchLeave: Resetting position');
+    setPosition({ x: null, y: null });
+  };
 
-  WithRelativeMousePos.displayName = `withRelativeMousePos(${DecoratedComponent.displayName})`
+  return {
+    ref: containerRef,
+    position,
+    handlers: {
+      onMouseMove: handleMouseMove,
+      onMouseLeave: handleMouseLeave,
+      onTouchMove: handleTouchMove,
+      onTouchLeave: handleTouchLeave,
+    },
+  };
+};
 
-  return WithRelativeMousePos
-}
 
-export default withRelativeMousePos
+// Hook to HOC adapter (si nécessaire pour la compatibilité)
+const withRelativeMousePos = (key = 'relativeMousePos') => (DecoratedComponent) => {
+  const WithRelativeMousePos = (props) => {
+    const { ref, position, handlers } = useRelativeMousePos();
+
+    const hocProps = {
+      [key]: {
+        innerRef: ref,
+        ...handlers,
+        x: position.x,
+        y: position.y,
+      },
+    };
+
+    return <DecoratedComponent {...props} {...hocProps} />;
+  };
+
+  WithRelativeMousePos.displayName = `withRelativeMousePos(${DecoratedComponent.displayName || DecoratedComponent.name || 'Component'})`;
+
+  return WithRelativeMousePos;
+};
+
+export { useRelativeMousePos };
+export default withRelativeMousePos;

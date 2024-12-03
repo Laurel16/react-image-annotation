@@ -1,49 +1,59 @@
-import React, { Component } from 'react';
-const isMouseHovering = (key = 'isMouseHovering') => (DecoratedComponent) => {
-  class IsMouseHovering extends Component {
-    constructor() {
-      super();
-      this.el = null; // Initialisation explicite.
-      this.state = {
-        isHoveringOver: false,
-      };
-    }
+import React, { useState, useEffect, useRef } from 'react';
 
-    componentDidMount() {
-      document.addEventListener('mousemove', this.onMouseMove);
-    }
+// Utilitaire pour vérifier si la souris est au-dessus d'un élément
+const isMouseOverElement = ({ elem, e }) => {
+  if (!elem) return false;
+  const rect = elem.getBoundingClientRect();
+  const { clientX, clientY } = e;
 
-    componentWillUnmount() {
-      document.removeEventListener('mousemove', this.onMouseMove);
-    }
+  return (
+    clientX >= rect.left &&
+    clientX <= rect.right &&
+    clientY >= rect.top &&
+    clientY <= rect.bottom
+  );
+};
 
-    onMouseMove = (e) => {
-      if (!this.el) {
-        return; // Évitez l'erreur si `this.el` est `null`.
-      }
+// Hook personnalisé pour détecter le survol de la souris
+const useMouseHovering = () => {
+  const [isHoveringOver, setIsHoveringOver] = useState(false);
+  const elementRef = useRef(null);
 
-      this.setState({
-        isHoveringOver: isMouseOverElement({ elem: this.el, e }),
-      });
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!elementRef.current) return;
+      setIsHoveringOver(isMouseOverElement({ elem: elementRef.current, e }));
     };
 
-    render() {
-      const hocProps = {
-        [key]: {
-          innerRef: (el) => {
-            this.el = el; // Mise à jour correcte de la référence.
-          },
-          isHoveringOver: this.state.isHoveringOver,
-        },
-      };
+    document.addEventListener('mousemove', handleMouseMove);
 
-      return <DecoratedComponent {...this.props} {...hocProps} />;
-    }
-  }
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
 
-  IsMouseHovering.displayName = `IsMouseHovering(${DecoratedComponent.displayName})`;
+  return { elementRef, isHoveringOver };
+};
 
-  return IsMouseHovering;
+// Hook to HOC adapter (si nécessaire pour la compatibilité)
+const isMouseHovering = (key = 'isMouseHovering') => (DecoratedComponent) => {
+  const WithMouseHovering = (props) => {
+    const { elementRef, isHoveringOver } = useMouseHovering();
+
+    const hocProps = {
+      [key]: {
+        innerRef: elementRef,
+        isHoveringOver,
+      },
+    };
+
+    return <DecoratedComponent {...props} {...hocProps} />;
+  };
+
+  WithMouseHovering.displayName = `IsMouseHovering(${DecoratedComponent.displayName || DecoratedComponent.name || 'Component'})`;
+
+  return WithMouseHovering;
 };
 
 export default isMouseHovering;
+
