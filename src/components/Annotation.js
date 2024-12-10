@@ -132,31 +132,25 @@ const Annotation = ({
   );
 
   const callSelectorMethod = (methodName, e) => {
-    console.log(`[callSelectorMethod] Invoking method: ${methodName}`, {
-      event: e,
-      value,
-    });
-
-    if (disableAnnotation) {
-      console.warn('[callSelectorMethod] Annotation is disabled.');
+    if (!targetRef.current) {
+      console.warn(`[callSelectorMethod] targetRef est null.`);
       return;
     }
-
+  
     const selector = getSelectorByType(type);
     if (selector?.methods?.[methodName]) {
       const updatedValue = selector.methods[methodName](value, e);
-
-      console.log(`[callSelectorMethod] Updated annotation:`, updatedValue);
-
+  
       if (updatedValue) {
         onChange(updatedValue);
       }
     } else {
       console.warn(
-        `[callSelectorMethod] Method not found in selector: ${methodName}`,
+        `[callSelectorMethod] Méthode ${methodName} introuvable pour le type : ${type}`
       );
     }
   };
+  
 
   const getTopAnnotationAt = (x, y) => {
     console.log('x et y', x, y);
@@ -245,39 +239,40 @@ const Annotation = ({
   console.log('[Annotation] Active annotation:', activeAnnotation);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {
+      console.warn('[useEffect] containerRef est null.');
+      return;
+    }
+  
     const container = containerRef.current;
-    if (!container) return;
-
-    // Ajoutez les écouteurs depuis relativeMousePos
+  
     container.addEventListener('mousemove', relativeMousePos.onMouseMove);
     container.addEventListener('mouseleave', relativeMousePos.onMouseLeave);
-
+  
     if (allowTouch) {
       container.addEventListener('touchmove', relativeMousePos.onTouchMove);
       container.addEventListener('touchleave', relativeMousePos.onTouchLeave);
     }
-
+  
     return () => {
-      container.removeEventListener('mousemove', relativeMousePos.onMouseMove);
-      container.removeEventListener(
-        'mouseleave',
-        relativeMousePos.onMouseLeave,
-      );
-
-      if (allowTouch) {
-        container.removeEventListener(
-          'touchmove',
-          relativeMousePos.onTouchMove,
-        );
-        container.removeEventListener(
-          'touchleave',
-          relativeMousePos.onTouchLeave,
-        );
+      if (containerRef.current) {
+        container.removeEventListener('mousemove', relativeMousePos.onMouseMove);
+        container.removeEventListener('mouseleave', relativeMousePos.onMouseLeave);
+  
+        if (allowTouch) {
+          container.removeEventListener(
+            'touchmove',
+            relativeMousePos.onTouchMove
+          );
+          container.removeEventListener(
+            'touchleave',
+            relativeMousePos.onTouchLeave
+          );
+        }
       }
     };
   }, [relativeMousePos, allowTouch]);
-
+  
   return (
     <Container
       ref={setInnerRef}
@@ -289,11 +284,24 @@ const Annotation = ({
       onTouchCancel={relativeMousePos.onTouchLeave}
       allowTouch={allowTouch}
     >
+      {src ? (
       <Img
-        ref={setInnerRef}
-        alt={alt}
+        ref={(el) => {
+          if (el) {
+            relativeMousePos.innerRef(el);
+            isMouseHovering.innerRef(el);
+          } else {
+            console.warn('[Img] Élément null reçu.');
+          }
+        }}
+        alt={alt || 'Image non disponible'}
         src={src}
       />
+    ) : (
+      <div style={{ textAlign: 'center', padding: '20px', border: '1px dashed gray' }}>
+        <p>Aucune image disponible pour l'annotation.</p>
+      </div>
+    )}
       <Items>
         {annotations.map((annotation) =>
           renderHighlight({
@@ -307,7 +315,13 @@ const Annotation = ({
           renderSelector({ annotation: value })}
       </Items>
       <Target
-        ref={targetRef}
+         ref={(el) => {
+        if (el) {
+          targetRef.current = el;
+        } else {
+          console.warn('[Target] Élément null reçu.');
+        }
+      }}
         onMouseDown={(e) => callSelectorMethod('onMouseDown', e)}
         onMouseMove={(e) => callSelectorMethod('onMouseMove', e)}
         onMouseUp={(e) => callSelectorMethod('onMouseUp', e)}
