@@ -39,12 +39,10 @@ export const useMouseHovering = () => {
       console.warn('[handleMouseMove] elementRef is null.');
       return;
     }
-
     const hovering = isMouseOverElement({
       elem: elementRef.current,
       e,
     });
-
     setIsHoveringOver(hovering);
   }, []);
 
@@ -54,10 +52,15 @@ export const useMouseHovering = () => {
       return;
     }
 
-    document.addEventListener('mousemove', handleMouseMove);
+    const handleMouseMoveWrapper = (e) => {
+      if (elementRef.current) {
+        handleMouseMove(e);
+      }
+    };
 
+    document.addEventListener('mousemove', handleMouseMoveWrapper);
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mousemove', handleMouseMoveWrapper);
     };
   }, [handleMouseMove]);
 

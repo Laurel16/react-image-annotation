@@ -22,6 +22,10 @@ const getMouseRelativeCoordinates = e => {
 
 const clamp = (a, b, i) => Math.max(a, Math.min(b, i))
 const getTouchRelativeCoordinates = e => {
+  if (!e.currentTarget) {
+    console.error('getTouchRelativeCoordinates: currentTarget is null');
+    return { x: null, y: null };
+  }
 const touch = e.targetTouches[0]
 
 const boundingRect = e.currentTarget.getBoundingClientRect()
@@ -37,6 +41,11 @@ return {
 }
 
 const getCoordPercentage = (e) => {
+  if (!e || typeof e !== 'object') {
+    console.warn('Invalid event object');
+    return { x: null, y: null };
+  }
+
 if (isTouchEvent(e)) {
   if (isValidTouchEvent(e)) {
     isTouchMoveEvent(e) && e.preventDefault()
@@ -51,8 +60,8 @@ if (isTouchEvent(e)) {
 }
 }
 
-const isTouchEvent = e => e.targetTouches !== undefined
-const isValidTouchEvent = e => e.targetTouches.length === 1
-const isTouchMoveEvent = e => e.type === 'touchmove'
+const isTouchEvent = (e) => e?.targetTouches !== undefined
+const isValidTouchEvent = (e) => e?.targetTouches.length === 1
+const isTouchMoveEvent = (e) => e?.type === 'touchmove'
 
 export { getMouseRelativeCoordinates as getOffsetCoordPercentage, getCoordPercentage };

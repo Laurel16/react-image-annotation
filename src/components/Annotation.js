@@ -109,6 +109,7 @@ const Annotation = ({
 
   const containerRef = useRef(null);
   const targetRef = useRef(null);
+  const imageRef = useRef(null);
   
   const setInnerRef = useCallback(
     (el) => {
@@ -117,6 +118,19 @@ const Annotation = ({
         isMouseHovering.innerRef(el);
         containerRef.current = el;
       } else {
+        console.warn('[setInnerRef] Received null element.');
+      }
+    },
+    [relativeMousePos, isMouseHovering]
+  );
+
+  const setImageRef = useCallback(
+    (el) => {
+      if (el) {
+        relativeMousePos.innerRef(el);
+        isMouseHovering.innerRef(el);
+        imageRef.current = el;
+      }else {
         console.warn('[setInnerRef] Received null element.');
       }
     },
@@ -286,14 +300,7 @@ const Annotation = ({
     >
       {src ? (
       <Img
-        ref={(el) => {
-          if (el) {
-            relativeMousePos.innerRef(el);
-            isMouseHovering.innerRef(el);
-          } else {
-            console.warn('[Img] Élément null reçu.');
-          }
-        }}
+         ref={setImageRef}
         alt={alt || 'Image non disponible'}
         src={src}
       />

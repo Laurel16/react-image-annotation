@@ -22,6 +22,7 @@ export const useRelativeMousePos = () => {
   const innerRef = useCallback((el) => {
     if (!el) {
       console.warn('[innerRef] Aucun élément DOM fourni.');
+      return;
     }
     containerRef.current = el;
   }, []);
@@ -31,7 +32,6 @@ export const useRelativeMousePos = () => {
       console.warn('[onMouseMove] Référence containerRef est null.');
       return;
     }
-
     try {
       const xyState = getOffsetCoordPercentage(e, containerRef.current);
       setMousePos(xyState);
@@ -45,25 +45,21 @@ export const useRelativeMousePos = () => {
       console.warn('[onTouchMove] Référence containerRef est null.');
       return;
     }
-
     if (e.targetTouches.length === 1) {
       const touch = e.targetTouches[0];
-      const offsetX =
-        touch.pageX - (containerRef.current.offsetParent?.offsetLeft || 0);
-      const offsetY =
-        touch.pageY - (containerRef.current.offsetParent?.offsetTop || 0);
-
-      if (
-        !containerRef.current.width ||
-        !containerRef.current.height
-      ) {
+      const rect = containerRef.current.getBoundingClientRect();
+      
+      if (!rect.width || !rect.height) {
         console.warn('[onTouchMove] Dimensions de containerRef non disponibles.');
         return;
       }
 
+      const offsetX = touch.clientX - rect.left;
+      const offsetY = touch.clientY - rect.top;
+
       setMousePos({
-        x: (offsetX / containerRef.current.width) * 100,
-        y: (offsetY / containerRef.current.height) * 100,
+        x: (offsetX / rect.width) * 100,
+        y: (offsetY / rect.height) * 100,
       });
     }
   }, []);
