@@ -1,7 +1,10 @@
 import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import isMouseHovering from '../utils/isMouseHovering';
-import withRelativeMousePos from '../utils/withRelativeMousePos';
+import { useRelativeMousePos } from '../utils/withRelativeMousePos';
+import { useMouseHovering } from '../utils/isMouseHovering';
+
+// import isMouseHovering from '../utils/isMouseHovering';
+// import withRelativeMousePos from '../utils/withRelativeMousePos';
 import Container from './Container';
 import Img from './Img';
 import Items from './Items';
@@ -86,8 +89,8 @@ const Annotation = ({
   disableEditor = false,
   disableOverlay = false,
   activeAnnotationComparator = (a, b) => a === b,
-  relativeMousePos,
-  isMouseHovering,
+  // relativeMousePos,
+  // isMouseHovering,
   allowTouch = false,
   style,
   className,
@@ -99,35 +102,24 @@ const Annotation = ({
   console.log('src:', src);
   console.log('annotations:', annotations);
   console.log('value:', value);
-  console.log('relative mouse pos', relativeMousePos);
+  //console.log('relative mouse pos', relativeMousePos);
 
   const containerRef = useRef(null);
   const targetRef = useRef(null);
-  // const setInnerRef = useCallback(
-  //   (el) => {
-  //     // Directly set the ref if it exists
-  //     if (relativeMousePos && relativeMousePos.innerRef) {
-  //       relativeMousePos.innerRef.current = el;
-  //     }
+  const relativeMousePos = useRelativeMousePos();
+  const isMouseHovering = useMouseHovering();
 
-  //     if (typeof innerRef === 'function') {
-  //       innerRef(el);
-  //     }
+  const setInnerRef = useCallback(
+    (el) => {
+      
+      relativeMousePos.innerRef(el);
+      isMouseHovering.innerRef(el);
 
-  //     if (isMouseHovering && isMouseHovering.innerRef) {
-  //       isMouseHovering.innerRef.current = el;
-  //     }
+      containerRef.current = el;
+    },
+    [relativeMousePos, isMouseHovering],
+  );
 
-  //     // Set your local ref
-  //     containerRef.current = el;
-  //     console.log('setInnerRef called with:', el);
-  // console.log('relativeMousePos:', relativeMousePos);
-  // console.log('isMouseHovering:', isMouseHovering);
-  // console.log('innerRef:', innerRef);
-
-  //   },
-  //   [relativeMousePos, innerRef, isMouseHovering],
-  // );
   const getSelectorByType = useCallback(
     (type) => {
       console.log('[getSelectorByType] Getting selector for type:', type);
@@ -229,9 +221,9 @@ const Annotation = ({
     relativeMousePos.x,
     relativeMousePos.y,
   );
-  const activeAnnotation = useMemo(() => 
-    getTopAnnotationAt(relativeMousePos.x, relativeMousePos.y), 
-    [relativeMousePos.x, relativeMousePos.y, annotations]
+  const activeAnnotation = getTopAnnotationAt(
+    relativeMousePos.x,
+    relativeMousePos.y,
   );
 
   const shouldAnnotationBeActive = (annotation, activeAnnotation) => {
@@ -249,64 +241,58 @@ const Annotation = ({
 
   console.log('[Annotation] Active annotation:', activeAnnotation);
 
-  // useEffect(() => {
-  //   const container = containerRef.current;
-  //   if (!container) return;
-  
-  //   // Ajoutez les écouteurs depuis relativeMousePos
-  //   container.addEventListener('mousemove', relativeMousePos.onMouseMove);
-  //   container.addEventListener('mouseleave', relativeMousePos.onMouseLeave);
-  
-  //   if (allowTouch) {
-  //     container.addEventListener('touchmove', relativeMousePos.onTouchMove);
-  //     container.addEventListener('touchleave', relativeMousePos.onTouchLeave);
-  //   }
-  
-  //   return () => {
-  //     container.removeEventListener('mousemove', relativeMousePos.onMouseMove);
-  //     container.removeEventListener('mouseleave', relativeMousePos.onMouseLeave);
-      
-  //     if (allowTouch) {
-  //       container.removeEventListener('touchmove', relativeMousePos.onTouchMove);
-  //       container.removeEventListener('touchleave', relativeMousePos.onTouchLeave);
-  //     }
-  //   };
-  // }, [relativeMousePos, allowTouch]);
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-  const setInnerRef = useCallback(
-    (el) => {
-      containerRef.current = el;
-      if (relativeMousePos?.innerRef) relativeMousePos.innerRef.current = el;
-      if (isMouseHovering?.innerRef) isMouseHovering.innerRef.current = el;
-      if (typeof innerRef === 'function') innerRef(el);
-  
-      // Ajout des écouteurs directement dans setInnerRef
-      if (el) {
-        el.addEventListener('mousemove', relativeMousePos.onMouseMove);
-        el.addEventListener('mouseleave', relativeMousePos.onMouseLeave);
-        if (allowTouch) {
-          el.addEventListener('touchmove', relativeMousePos.onTouchMove);
-          el.addEventListener('touchleave', relativeMousePos.onTouchLeave);
-        }
+    // Ajoutez les écouteurs depuis relativeMousePos
+    container.addEventListener('mousemove', relativeMousePos.onMouseMove);
+    container.addEventListener('mouseleave', relativeMousePos.onMouseLeave);
+
+    if (allowTouch) {
+      container.addEventListener('touchmove', relativeMousePos.onTouchMove);
+      container.addEventListener('touchleave', relativeMousePos.onTouchLeave);
+    }
+
+    return () => {
+      container.removeEventListener('mousemove', relativeMousePos.onMouseMove);
+      container.removeEventListener(
+        'mouseleave',
+        relativeMousePos.onMouseLeave,
+      );
+
+      if (allowTouch) {
+        container.removeEventListener(
+          'touchmove',
+          relativeMousePos.onTouchMove,
+        );
+        container.removeEventListener(
+          'touchleave',
+          relativeMousePos.onTouchLeave,
+        );
       }
-    },
-    [relativeMousePos, isMouseHovering, innerRef, allowTouch]
-  );
-  
-  
+    };
+  }, [relativeMousePos, allowTouch]);
 
   return (
     <Container
       ref={setInnerRef}
       style={style}
       className={className}
-      onMouseMove={relativeMousePos.onMouseMove}  // Ajoutez cette ligne
-  onMouseLeave={relativeMousePos.onMouseLeave}  // Ajoutez cette ligne
-  onTouchMove={relativeMousePos.onTouchMove}  // Ajoutez cette ligne
-  onTouchCancel={relativeMousePos.onTouchLeave}
+      onMouseMove={relativeMousePos.onMouseMove}
+      onMouseLeave={relativeMousePos.onMouseLeave}
+      onTouchMove={relativeMousePos.onTouchMove}
+      onTouchCancel={relativeMousePos.onTouchLeave}
       allowTouch={allowTouch}
     >
-      <Img ref={setInnerRef} alt={alt} src={src} />
+      <Img
+        ref={(el) => {
+          relativeMousePos.innerRef(el);
+          isMouseHovering.innerRef(el);
+        }}
+        alt={alt}
+        src={src}
+      />
       <Items>
         {annotations.map((annotation) =>
           renderHighlight({
@@ -344,4 +330,4 @@ const Annotation = ({
   );
 };
 
-export default compose(isMouseHovering(), withRelativeMousePos())(Annotation);
+export default Annotation;
