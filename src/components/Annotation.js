@@ -290,10 +290,7 @@ const Annotation = ({
       allowTouch={allowTouch}
     >
       <Img
-        ref={(el) => {
-          relativeMousePos.innerRef(el);
-          isMouseHovering.innerRef(el);
-        }}
+        ref={setInnerRef}
         alt={alt}
         src={src}
       />
