@@ -112,13 +112,15 @@ const Annotation = ({
   
   const setInnerRef = useCallback(
     (el) => {
-      
-      relativeMousePos.innerRef(el);
-      isMouseHovering.innerRef(el);
-
-      containerRef.current = el;
+      if (el) {
+        relativeMousePos.innerRef(el);
+        isMouseHovering.innerRef(el);
+        containerRef.current = el;
+      } else {
+        console.warn('[setInnerRef] Received null element.');
+      }
     },
-    [relativeMousePos, isMouseHovering],
+    [relativeMousePos, isMouseHovering]
   );
 
   const getSelectorByType = useCallback(
