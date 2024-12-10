@@ -2,6 +2,17 @@ import { useState, useRef, useCallback } from 'react';
 import { getOffsetCoordPercentage } from './offsetCoordinates';
 
 export const useRelativeMousePos = () => {
+  if (typeof window === 'undefined') {
+    return {
+      innerRef: () => {},
+      onMouseMove: () => {},
+      onMouseLeave: () => {},
+      onTouchMove: () => {},
+      onTouchLeave: () => {},
+      x: null,
+      y: null,
+    };
+  }
   const [mousePos, setMousePos] = useState({ x: null, y: null });
   const containerRef = useRef(null);
 

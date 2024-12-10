@@ -12,6 +12,12 @@ const isMouseOverElement = ({ elem, e }) => {
 };
 
 export const useMouseHovering = () => {
+  if (typeof window === 'undefined') {
+    return {
+      innerRef: () => {},
+      isHoveringOver: false,
+    };
+  }
   const [isHoveringOver, setIsHoveringOver] = useState(false);
   const elementRef = useRef(null);
 
