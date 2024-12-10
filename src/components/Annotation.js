@@ -91,6 +91,9 @@ const Annotation = ({
   activeAnnotationComparator = (a, b) => a === b,
   // relativeMousePos,
   // isMouseHovering,
+  relativeMousePos = useRelativeMousePos(),
+  isMouseHovering = useMouseHovering(),
+
   allowTouch = false,
   style,
   className,
@@ -106,9 +109,7 @@ const Annotation = ({
 
   const containerRef = useRef(null);
   const targetRef = useRef(null);
-  const relativeMousePos = useRelativeMousePos();
-  const isMouseHovering = useMouseHovering();
-
+  
   const setInnerRef = useCallback(
     (el) => {
       
@@ -221,10 +222,10 @@ const Annotation = ({
     relativeMousePos.x,
     relativeMousePos.y,
   );
-  const activeAnnotation = getTopAnnotationAt(
-    relativeMousePos.x,
-    relativeMousePos.y,
-  );
+  const activeAnnotation = relativeMousePos.x && relativeMousePos.y
+    ? getTopAnnotationAt(relativeMousePos.x, relativeMousePos.y)
+    : null;
+
 
   const shouldAnnotationBeActive = (annotation, activeAnnotation) => {
     if (!activeAnnotationComparator) return false;
@@ -242,6 +243,7 @@ const Annotation = ({
   console.log('[Annotation] Active annotation:', activeAnnotation);
 
   useEffect(() => {
+    if (!containerRef.current) return;
     const container = containerRef.current;
     if (!container) return;
 
